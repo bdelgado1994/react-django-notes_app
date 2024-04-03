@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient, useMutation } from "react-query";
-import { getAllTasks } from "../api/tasks";
+import { getAllTasks, deleteTask } from "../api/tasks";
 import Loader from "./Loader";
 import toast from "react-hot-toast";
 import { ImCheckboxUnchecked, ImCheckboxChecked } from "react-icons/im";
@@ -7,7 +7,7 @@ import { AiFillDelete, AiFillEdit, AiFillEye } from "react-icons/ai";
 import { Link } from "react-router-dom";
 
 const Tasks = () => {
-    //const queryClient = useQueryClient();
+    const queryClient = useQueryClient();
     const {
         data: tasks,
         isLoading,
@@ -17,6 +17,14 @@ const Tasks = () => {
         queryKey: ["tasks"],
         queryFn: getAllTasks,
     });
+    const deleteTaskMutation = useMutation({
+        mutationFn: deleteTask,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['tasks'] })
+            toast.success('Task deleted')
+        },
+        onError: (error) => toast.error(error.message)
+    })
     if (isLoading) return <Loader />;
     if (isError) return toast.error(error.message);
     return (
@@ -43,16 +51,14 @@ const Tasks = () => {
                             <AiFillEye size={30} />
                         </Link>
 
-                        <Link
-                            className="text-cyan-700 hover:text-cyan-200 transition-colors m-3"
-                            to={`/edit/${task.id}`}
-                        >
+                        <Link className="text-cyan-700 hover:text-cyan-200 transition-colors m-3" to={`/edit/${task.id}`}>
                             <AiFillEdit size={30} />
                         </Link>
 
                         <button
                             className="text-red-700 hover:text-red-200 transition-colors mb-4 m-3"
                             type="button"
+                            onClick={() => deleteTaskMutation.mutate(task.id)}
                         >
                             <AiFillDelete size={30} />
                         </button>
